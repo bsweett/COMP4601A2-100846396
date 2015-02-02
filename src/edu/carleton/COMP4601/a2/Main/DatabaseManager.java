@@ -41,7 +41,7 @@ public class DatabaseManager {
 
 		try {
 			this.mongoClient = new MongoClient( "localhost" );
-			setDatabase(this.mongoClient.getDB( "comp4601A1-100846396" ));
+			setDatabase(this.mongoClient.getDB( "comp4601A2-100846396" ));
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
