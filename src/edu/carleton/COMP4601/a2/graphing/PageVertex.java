@@ -1,0 +1,42 @@
+package edu.carleton.COMP4601.a2.graphing;
+
+import java.io.Serializable;
+
+public class PageVertex implements Serializable, Cloneable {
+
+	private static final long serialVersionUID = -1214346455090744350L;
+	private Integer id;
+	private String url;
+	private long duration;
+	
+	public PageVertex(Integer id, String url, long duration) {
+		setId(id);
+		setUrl(url);
+		setDuration(duration);
+	}
+
+	public synchronized String getUrl() {
+		return url;
+	}
+
+	public synchronized void setUrl(String url) {
+		this.url = url;
+	}
+
+	public synchronized Integer getId() {
+		return id;
+	}
+
+	public synchronized void setId(int id) {
+		this.id = id;
+	}
+
+	public synchronized long getDuration() {
+		return duration;
+	}
+
+	public synchronized void setDuration(long duration) {
+		this.duration = duration;
+	}
+	
+}
