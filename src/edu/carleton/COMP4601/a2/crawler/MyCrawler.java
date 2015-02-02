@@ -31,10 +31,9 @@ public class MyCrawler extends WebCrawler {
 	private static String[] domains;
 
 	private static final Pattern filters = Pattern.compile(".*(\\.(css|js|mid|mp2|mp3|mp4|wav|avi|mov|mpeg|ram|m4v"
-			+ "|rm|smil|wmv|swf|wma|zip|rar|gz|bmp|gif|jpe?g))$");
+			+ "|rm|smil|wmv|swf|wma|zip|rar|gz|bmp))$");
 
-	//TODO: Add allow patterns (jpeg, tiff, gif, png), pdf, doc, docx, xls, xlsx, ppt and pptx
-	private static final Pattern allowedPatterns = Pattern.compile(".*(\\.(pdf|png|doc|docx?))$");
+	private static final Pattern allowedPatterns = Pattern.compile(".*(\\.(pdf|png|gif|jpe?g|xls|xlsx|ppt|pptx|doc|docx?))$");
 
 	public static void configure(String[] domain) {
 		domains = domain;
@@ -140,31 +139,12 @@ public class MyCrawler extends WebCrawler {
 			String type = mediaType.getSubtype();
 			InputStream inputStream = new ByteArrayInputStream(page.getContentData());
 			Metadata metadata = null;
-			//OtherDocument doc = null;
 			
 			metadata = TikaParsingManager.getInstance().parseUsingAutoDetect(inputStream);
 			// Build doc here
-			edu.carleton.COMP4601.a2.dao.Document myDoc = new edu.carleton.COMP4601.a2.dao.Document(page.getWebURL().getDocid());
-			//myDoc.set
 			
-			/*
-			if(type.equals("png")) {
-				
-				metadata = TikaParsingManager.getInstance().parseMetadataForImageWithType(inputStream, "");
-				//doc = buildMimeDocFromMetadata(metadata, page.getWebURL().getDocid(), url, currentTime);
-				System.out.println("IMAGE: " + metadata.toString());
+			//myDoc.set
 
-			} else if (type.equals("pdf")) {
-				metadata = TikaParsingManager.getInstance().parseMetadataForPDF(inputStream);
-				//doc = buildMimeDocFromMetadata(metadata, page.getWebURL().getDocid(), url, currentTime);
-				System.out.println("PDF: " + metadata.toString());
-				
-			} else if (type.equals("msword") || type.equals("vnd.openxmlformats-officedocument.wordprocessingml.document")) {
-				metadata = TikaParsingManager.getInstance().parseMetadataForDOC(inputStream);
-				//doc = buildMimeDocFromMetadata(metadata, page.getWebURL().getDocid(), url, currentTime);
-				System.out.println("WORD: " + metadata.toString());
-				
-			}*/
 			
 			// If doc was built properly add it to the DB
 			/*
@@ -181,7 +161,7 @@ public class MyCrawler extends WebCrawler {
 	}
 	
 	/*
-	private OtherDocument buildMimeDocFromMetadata(Metadata metadata, int id, String url, long time) {
+	private Document buildMimeDocFromMetadata(Metadata metadata, int id, String url, long time) {
 		
 		String type = metadata.get(Metadata.CONTENT_TYPE);
 		String name = metadata.get(Metadata.TITLE);
@@ -191,16 +171,16 @@ public class MyCrawler extends WebCrawler {
 		String date = metadata.get(Metadata.CREATION_DATE);
 		
 		try {
-			OtherDocument otherDoc = new OtherDocument();
-			otherDoc.setId(id);
-			otherDoc.setUrl(url);
-			otherDoc.setTime(time);
-			otherDoc.setType(type != null ? type : "");
-			otherDoc.setName(name != null ? name : "");
-			otherDoc.setAuthor(author != null ? author : "");
-			otherDoc.setCreator(creator != null ? creator : "");
-			otherDoc.setProducer(producer != null ? producer : "");
+			edu.carleton.COMP4601.a2.dao.Document myDoc = new edu.carleton.COMP4601.a2.dao.Document(page.getWebURL().getDocid());
+			myDoc.setId(id);
+			myDoc.setTime(time);
+			myDoc.setType(type != null ? type : "");
+			myDoc.setName(name != null ? name : "");
+			myDoc.setAuthor(author != null ? author : "");
+			myDoc.setCreator(creator != null ? creator : "");
+			myDoc.setProducer(producer != null ? producer : "");
 			
+			/*
 			if(date != null) {
 				Calendar cal = Calendar.getInstance();
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
