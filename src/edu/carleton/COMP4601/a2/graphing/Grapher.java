@@ -11,13 +11,13 @@ public class Grapher implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -6017417770252581831L;
-	private Multigraph<PageVertex, DefaultEdge> graph;
+	private DefaultDirectedGraph<PageVertex, DefaultEdge> graph;
 	private ConcurrentHashMap<Integer, PageVertex> vertices;
 	private String name;
 	
 	public Grapher(String name) {
 		this.name = name;
-		this.graph = new Multigraph<PageVertex, DefaultEdge>(DefaultEdge.class);
+		this.graph = new DefaultDirectedGraph<PageVertex, DefaultEdge>(DefaultEdge.class);
 		this.vertices = new ConcurrentHashMap<Integer, PageVertex>();
 	}
 	

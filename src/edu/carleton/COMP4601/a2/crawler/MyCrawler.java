@@ -27,18 +27,14 @@ import edu.carleton.COMP4601.a2.tika.TikaParsingManager;
 public class MyCrawler extends WebCrawler {
 
 	private Grapher crawlGraph;
+	private PageVertex root;
 	private static String[] domains;
 
 	private static final Pattern filters = Pattern.compile(".*(\\.(css|js|mid|mp2|mp3|mp4|wav|avi|mov|mpeg|ram|m4v"
 			+ "|rm|smil|wmv|swf|wma|zip|rar|gz|bmp|gif|jpe?g))$");
 
+	//TODO: Add allow patterns (jpeg, tiff, gif, png), pdf, doc, docx, xls, xlsx, ppt and pptx
 	private static final Pattern allowedPatterns = Pattern.compile(".*(\\.(pdf|png|doc|docx?))$");
-
-	/*
-	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|bmp|gif|jpe?g" 
-			+ "|png|tiff?|mid|mp2|mp3|mp4"
-			+ "|wav|avi|mov|mpeg|ram|m4v|pdf" 
-			+ "|rm|smil|wmv|swf|wma|zip|rar|gz))$");*/
 
 	public static void configure(String[] domain) {
 		domains = domain;
@@ -46,7 +42,11 @@ public class MyCrawler extends WebCrawler {
 
 	@Override
 	public void onStart() {
-		this.crawlGraph = new Grapher("myGraph");
+		String graphName = "Crawler Graph: " + Integer.toString(this.myId);
+		this.crawlGraph = new Grapher(graphName);
+		
+		this.root = new PageVertex(0, "Root", 0);
+		this.crawlGraph.addVertex(this.root);
 	}
 
 	@Override
@@ -95,11 +95,13 @@ public class MyCrawler extends WebCrawler {
 		long currentTime = date.getTime();
 
 		String url = page.getWebURL().getURL();
+		int docId = page.getWebURL().getDocid();
+		
 		System.out.println("URL: " + url);
 
 		Tika tika = new Tika();
-
 		MediaType mediaType = null;
+		
 		try {
 			mediaType = MediaType.parse(tika.detect(new URL(url)));
 		} catch (IOException e) {
@@ -113,6 +115,21 @@ public class MyCrawler extends WebCrawler {
 			parseBinaryToDocument(page, mediaType, url, currentTime);
 			
 		}
+		
+		// Graphing with root node (NOTE: Untested)
+		String parentUrl = page.getWebURL().getParentUrl();
+		int parentId = page.getWebURL().getParentDocid();
+		
+		PageVertex newPage = new PageVertex(docId, url, currentTime);
+		this.crawlGraph.addVertex(newPage);
+		
+		if(parentUrl.isEmpty()) {
+			this.crawlGraph.addEdge(this.root, newPage);
+		} else {
+			PageVertex parentPage = new PageVertex(parentId, parentUrl, currentTime);
+			this.crawlGraph.addVertex(parentPage);
+			this.crawlGraph.addEdge(parentPage, newPage);
+		}
 	}
 
 
@@ -125,9 +142,15 @@ public class MyCrawler extends WebCrawler {
 			Metadata metadata = null;
 			//OtherDocument doc = null;
 			
+			metadata = TikaParsingManager.getInstance().parseUsingAutoDetect(inputStream);
+			// Build doc here
+			edu.carleton.COMP4601.a2.dao.Document myDoc = new edu.carleton.COMP4601.a2.dao.Document(page.getWebURL().getDocid());
+			//myDoc.set
+			
+			/*
 			if(type.equals("png")) {
 				
-				metadata = TikaParsingManager.getInstance().parseMetadataForPNG(inputStream);
+				metadata = TikaParsingManager.getInstance().parseMetadataForImageWithType(inputStream, "");
 				//doc = buildMimeDocFromMetadata(metadata, page.getWebURL().getDocid(), url, currentTime);
 				System.out.println("IMAGE: " + metadata.toString());
 
@@ -141,8 +164,9 @@ public class MyCrawler extends WebCrawler {
 				//doc = buildMimeDocFromMetadata(metadata, page.getWebURL().getDocid(), url, currentTime);
 				System.out.println("WORD: " + metadata.toString());
 				
-			}
+			}*/
 			
+			// If doc was built properly add it to the DB
 			/*
 			if(doc != null) {
 				DatabaseManager.getInstance().addNewOtherDocument(doc);
@@ -195,6 +219,7 @@ public class MyCrawler extends WebCrawler {
 		}
 	}*/
 
+	// TODO: Cleanup.. Soup stuff is probably needs by image's as well
 	private boolean parseHTMLToDocument(Page page, String url, long currentTime) {
 
 		try {
@@ -260,18 +285,6 @@ public class MyCrawler extends WebCrawler {
 			myDoc.setText(rawText);
 
 			DatabaseManager.getInstance().addNewDocument(myDoc);
-
-			// Graph this page
-			PageVertex newPage = new PageVertex(docId, url, currentTime);
-			this.crawlGraph.addVertex(newPage);
-
-			// Parent Page
-			//String parentUrl = page.getWebURL().getParentUrl();
-			//int parentId = page.getWebURL().getParentDocid();
-
-			//PageVertex parentPage = new PageVertex(parentId, parentUrl, duration);
-			//this.crawlGraph.addVertex(parentPage);
-			//this.crawlGraph.addEdge(parentPage, newPage);
 
 			return true;
 		} catch (Exception e) {

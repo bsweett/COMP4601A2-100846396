@@ -37,7 +37,7 @@ public class Controller {
 		String homePath = System.getProperty("user.home");
 		String crawlStorageFolder = "/data/crawl/root";
 		int numberOfCrawlers = 7;
-		String[] crawlDomains = new String[] { "http://uci.edu/", "http://www.acm.org/sigs/publications/proceedings-templates/", "http://sikaman.dyndns.org:8888/courses/4601/" };
+		String[] crawlDomains = new String[] { "http://sikaman.dyndns.org:8888/courses/4601/resources/", "http://www.carleton.ca", "http://props.social/" };
 
 		PropertyConfigurator.configure("log4j.properties");
 		
