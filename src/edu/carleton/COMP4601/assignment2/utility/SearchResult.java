@@ -1,11 +1,11 @@
-package edu.carleton.COMP4601.a2.utility;
+package edu.carleton.comp4601.assignment2.utility;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import edu.carleton.COMP4601.a2.dao.Document;
+import edu.carleton.comp4601.assignment2.dao.Document;
 
 public class SearchResult {
 	CountDownLatch latch;

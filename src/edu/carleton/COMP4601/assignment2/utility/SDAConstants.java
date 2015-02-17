@@ -1,4 +1,4 @@
-package edu.carleton.COMP4601.a2.utility;
+package edu.carleton.comp4601.assignment2.utility;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

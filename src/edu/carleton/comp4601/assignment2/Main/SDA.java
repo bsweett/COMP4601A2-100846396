@@ -1,4 +1,4 @@
-package edu.carleton.COMP4601.a2.Main;
+package edu.carleton.comp4601.assignment2.Main;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,7 +20,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
 
-import edu.carleton.COMP4601.a2.dao.Document;
+import edu.carleton.comp4601.assignment2.dao.Document;
+import edu.carleton.comp4601.assignment2.database.DatabaseManager;
 
 @Path("/sda")
 public class SDA {

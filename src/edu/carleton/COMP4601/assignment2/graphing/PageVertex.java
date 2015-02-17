@@ -1,4 +1,4 @@
-package edu.carleton.COMP4601.a2.graphing;
+package edu.carleton.comp4601.assignment2.graphing;
 
 import java.io.Serializable;
 
@@ -8,6 +8,9 @@ public class PageVertex implements Serializable, Cloneable {
 	private Integer id;
 	private String url;
 	private long duration;
+	
+	private int row;
+	private int col;
 	
 	public PageVertex(Integer id, String url, long duration) {
 		setId(id);
@@ -37,6 +40,22 @@ public class PageVertex implements Serializable, Cloneable {
 
 	public synchronized void setDuration(long duration) {
 		this.duration = duration;
+	}
+
+	public int getRow() {
+		return row;
+	}
+
+	public void setRow(int row) {
+		this.row = row;
+	}
+
+	public int getCol() {
+		return col;
+	}
+
+	public void setCol(int col) {
+		this.col = col;
 	}
 	
 }

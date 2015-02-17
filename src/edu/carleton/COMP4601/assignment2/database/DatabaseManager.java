@@ -1,7 +1,8 @@
-package edu.carleton.COMP4601.a2.Main;
+package edu.carleton.comp4601.assignment2.database;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -11,7 +12,7 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 
-import edu.carleton.COMP4601.a2.dao.Document;
+import edu.carleton.comp4601.assignment2.dao.Document;
 
 public class DatabaseManager {
 
@@ -34,14 +35,14 @@ public class DatabaseManager {
 	private MongoClient mongoClient;
 	private static DatabaseManager instance;
 	private final String DOCUMENTS = "documents";
-	private final String GRAPHS = "graphs";
+	private final String GRAPH = "graph";
 
 	// Constructor (only called once)
 	public DatabaseManager() {
 
 		try {
 			this.mongoClient = new MongoClient( "localhost" );
-			setDatabase(this.mongoClient.getDB( "comp4601A2-100846396" ));
+			setDatabase(this.mongoClient.getDB( "comp4601A2" ));
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
@@ -50,7 +51,7 @@ public class DatabaseManager {
 	
 	public boolean addNewGraph(String name, byte[] graph) {
 		try {
-			DBCollection col = db.getCollection(GRAPHS);
+			DBCollection col = db.getCollection(GRAPH);
 			BasicDBObject obj = new BasicDBObject();
 			obj.put("name", name);
 			obj.put("bytes", graph);
@@ -61,6 +62,27 @@ public class DatabaseManager {
 		}
 		
 		return true;
+	}
+	
+	public byte[] getGraphData(String name) {
+
+		try {
+			BasicDBObject query = new BasicDBObject("name", name);
+			DBCollection col = db.getCollection(GRAPH);
+			DBObject result = col.findOne(query);
+
+			if(result != null) {
+				Map<?, ?> graphMap = result.toMap();
+				byte[] bytes = (byte[]) graphMap.get("bytes");				
+				return bytes;
+			}
+
+			return null;
+		} catch (MongoException e) {
+			System.out.println("MongoException: " + e.getLocalizedMessage());
+			return null;
+		}
+
 	}
 
 	// Adds a new document to the database

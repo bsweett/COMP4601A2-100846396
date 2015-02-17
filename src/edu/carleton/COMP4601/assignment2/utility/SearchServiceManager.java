@@ -1,4 +1,4 @@
-package edu.carleton.COMP4601.a2.utility;
+package edu.carleton.comp4601.assignment2.utility;
 
 import java.io.IOException;
 import java.util.Map.Entry;
@@ -20,8 +20,8 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 
-import edu.carleton.COMP4601.a2.dao.DocumentCollection;
-import edu.carleton.COMP4601.a2.utility.ServiceRegistrar;
+import edu.carleton.comp4601.assignment2.dao.DocumentCollection;
+import edu.carleton.comp4601.assignment2.utility.ServiceRegistrar;
 
 // Assumption is that this works as a singleton.
 // We register the service when we create it.
