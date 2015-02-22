@@ -22,6 +22,8 @@ import javax.xml.bind.JAXBElement;
 
 import edu.carleton.comp4601.assignment2.dao.Document;
 import edu.carleton.comp4601.assignment2.database.DatabaseManager;
+import edu.carleton.comp4601.assignment2.utility.PageRankManager;
+import edu.carleton.comp4601.assignment2.utility.Tuple;
 
 @Path("/sda")
 public class SDA {
@@ -205,6 +207,7 @@ public class SDA {
 		document.setId(DatabaseManager.getInstance().getNextIndex());
 
 		if(DatabaseManager.getInstance().addNewDocument(document)) {
+			// TODO: INDEX DOCUMENT WITH LUCENE AND ADD BOOST VALUE OF 2 18.6
 			res = Response.ok().build();
 		}
 		else {
@@ -237,6 +240,7 @@ public class SDA {
 				updatedDocument.setScore(existingDocument.getScore());
 
 				if(DatabaseManager.getInstance().updateDocument(updatedDocument, existingDocument)) {
+					// TODO: DELETE OLD LUCENE DOCUMENT AND INSERT NEW DOCUMENT 18.7
 					res = Response.ok().build();
 				}
 				else {
@@ -278,6 +282,7 @@ public class SDA {
 			htmlBuilder.append(s);
 			htmlBuilder.append("</li>");
 		}
+		htmlBuilder.append("<h1>" + d.getScore() + "</h1>");
 		htmlBuilder.append("</ul></body>");
 		htmlBuilder.append("</html>");
 
@@ -315,6 +320,7 @@ public class SDA {
 				htmlBuilder.append("</li>");
 			}
 			htmlBuilder.append("</ul>");
+			htmlBuilder.append("<h1>" + d.getScore() + "</h1>");
 		}
 		htmlBuilder.append("</body>");
 		htmlBuilder.append("</html>");
@@ -384,7 +390,109 @@ public class SDA {
 	private String badRequest() {
 		return "<?xml version=\"1.0\"?>" + "<code> " + "406" + " </code>" + "<status> " + "Bad Request" + " </status>";
 	}
+	
+	//18.1 Reset document archive
+	@GET
+	@Path("reset")
+	@Consumes(MediaType.APPLICATION_XML)
+	public Response resetDocuments(){
+		Response res;
+		return Response.ok().build();
+	}
+	
+	//18.2 List the discovered search services
+	@GET
+	@Path("list")
+	@Consumes(MediaType.APPLICATION_XML)
+	public Response listServices(){
+		Response res;
+		return Response.ok().build();
+	}
+	
+	//18.3 Get page rank score for all documents
+	@GET
+	@Path("pagerank")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.TEXT_HTML)
+	public String getPageRankHTML() {
+		Tuple<ArrayList<String>, ArrayList<Float>> pageRanks = PageRankManager.getInstance().computePageRank();
 
+		if(pageRanks == null) {
+			return get204();
+		}
 
+		StringBuilder htmlBuilder = new StringBuilder();
+		htmlBuilder.append("<html>");
+		htmlBuilder.append("<head><title> All Documents </title></head>");
+		htmlBuilder.append("<body>");
+		for(int i=0; i<pageRanks.x.size(); i++) {
+			htmlBuilder.append("<h1>" + pageRanks.x.get(i) + "</h1>");
+			htmlBuilder.append("<h1>" + pageRanks.y.get(i) + "</h1>");
+		}
+		htmlBuilder.append("</body>");
+		htmlBuilder.append("</html>");
 
+		return htmlBuilder.toString();
+	}
+	
+	@GET
+	@Path("pagerank")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public ArrayList<Document> getPageRankXML() {
+		return new ArrayList<Document>();
+	}
+	
+	//18.4 Boost document relevance
+	@GET
+	@Path("boost")
+	@Consumes(MediaType.APPLICATION_XML)
+	public Response boostDocuments(){
+		Response res;
+		return Response.ok().build();
+	}
+	
+	//18.5 Boost document relevance
+	@GET
+	@Path("noboost")
+	@Consumes(MediaType.APPLICATION_XML)
+	public Response noBoostDocuments(){
+		Response res;
+		return Response.ok().build();
+	}
+	
+	//18.8 Query documents with specific terms
+	//DISTIBUTED SEARCH
+	@GET
+	@Path("search/{terms}")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.TEXT_HTML)
+	public String searchDistributedHTML(){
+		return "Hello world";
+	}
+	
+	@GET
+	@Path("search/{terms}")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public ArrayList<Document> searchDistributedXML(){
+		return new ArrayList<Document>();
+	}
+	
+	//LOCAL DOCUMENT SEARCH
+	@GET
+	@Path("query/{terms}")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.TEXT_HTML)
+	public String searchLocalHTML(){
+		return "hello world";
+	}
+	
+	@GET
+	@Path("query/{terms}")
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	public ArrayList<Document> searchLocalXML(){
+		return new ArrayList<Document>();
+	}
 }

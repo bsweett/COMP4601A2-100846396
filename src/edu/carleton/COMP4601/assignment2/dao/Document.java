@@ -12,7 +12,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType (XmlAccessType.FIELD)
 public class Document {
 	private Integer id;
-	private Integer score;
+	private float score;
 	private String name;
 	private String text;
 	@XmlElement(name = "tags")
@@ -45,11 +45,11 @@ public class Document {
 		return id;
 	}
 
-	public void setScore(Integer score) {
+	public void setScore(float score) {
 		this.score = score;
 	}
 
-	public Integer getScore() {
+	public float getScore() {
 		return score;
 	}
 

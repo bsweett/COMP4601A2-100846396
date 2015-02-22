@@ -19,6 +19,18 @@ public class SDAContextClass implements ServletContextListener {
 	public void contextInitialized(ServletContextEvent arg0) {
 		SearchServiceManager.getInstance();
 		DatabaseManager.getInstance();
+		PageRankManager.getInstance();
+		/*	
+		Runnable myRunnable = new Runnable(){
+
+			public void run(){
+				PageRankManager.getInstance().computePageRank();
+		     }
+			};
+
+		   Thread thread = new Thread(myRunnable);
+		   thread.start();
+		   */
 	}
 
 }
