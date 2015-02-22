@@ -42,6 +42,8 @@ public class PageRankManager {
 	public PageRankManager() {
 		try {
 			this.graph = (Grapher) Marshaller.deserializeObject(DatabaseManager.getInstance().getGraphData("graph"));
+			System.out.println(this.graph.getName());
+			System.out.println(this.graph.getVertices().mappingCount());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -89,6 +91,8 @@ public class PageRankManager {
 
 	private void setupMatrix() {
 
+		System.out.println("Vertex Set: " + graph.getGraph().vertexSet().size());
+		
 		double[][] arrayDummy = new double[graph.getGraph().vertexSet().size()][graph.getGraph().vertexSet().size()];
 		matrix = new Matrix(arrayDummy);
 		int row = 0;

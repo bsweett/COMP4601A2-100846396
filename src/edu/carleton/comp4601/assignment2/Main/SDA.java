@@ -535,11 +535,11 @@ public class SDA {
 			e.printStackTrace();
 		}
 		
-		//ArrayList<Document> docs = result.getDocs();
-		//System.out.println(docs.size());
+		ArrayList<Document> docs = result.getDocs();
+		System.out.println(docs.size());
 		//return documentsToHTML(result.getDocs());
 		
-		return "nothing";
+		return documentsToHTML(docs);
 	}
 	
 	@GET
