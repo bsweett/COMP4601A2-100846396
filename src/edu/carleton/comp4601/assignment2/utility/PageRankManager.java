@@ -91,8 +91,6 @@ public class PageRankManager {
 
 	private void setupMatrix() {
 
-		System.out.println("Vertex Set: " + graph.getGraph().vertexSet().size());
-		
 		double[][] arrayDummy = new double[graph.getGraph().vertexSet().size()][graph.getGraph().vertexSet().size()];
 		matrix = new Matrix(arrayDummy);
 		int row = 0;
@@ -104,7 +102,7 @@ public class PageRankManager {
 		Iterator<PageVertex> itr2 = currentVertices.iterator();
 		
 		while(itr1.hasNext()) {
-			while(itr1.hasNext()) {
+			while(itr2.hasNext()) {
 				if(this.graph.getGraph().getEdge(itr1.next(), itr2.next()) != null) {	
 					matrix.set(row, col, 1);
 				}
