@@ -23,47 +23,39 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import edu.carleton.comp4601.assignment2.dao.DocumentCollection;
 import edu.carleton.comp4601.assignment2.utility.ServiceRegistrar;
 
+// Assumption is that this works as a singleton.
+// We register the service when we create it.
 public class SearchServiceManager {
 
 	private static SearchServiceManager instance;
-
+	
 	private Timer timer;
 	private ConcurrentHashMap<String, JSONObject> dirServices;
 	private Logger logger;
 	private String uniqueName;
 
-	private SearchServiceManager() {
+	public SearchServiceManager() {
 		logger = Logger.getGlobal();
 		uniqueName = SDAConstants.COMP4601SDA + hashCode();
 		dirServices = new ConcurrentHashMap<String, JSONObject>();
-		start();
+		timer = new Timer();
+		timer.scheduleAtFixedRate(new AskDirectoryServer(), SDAConstants.ONE_MINUTE,
+				SDAConstants.ONE_MINUTE);
 	}
 	
-	public void setUniqueName(String name) {
-		uniqueName = name;
-	}
-
-	public void start() {
-		logger.log(Level.INFO, "Starting distributed search services...");
-		timer = new Timer();
-		timer.scheduleAtFixedRate(new AskDirectoryServer(),
-				SDAConstants.ONE_MINUTE, SDAConstants.ONE_MINUTE);
-	}
-
 	public void stop() {
 		logger.log(Level.INFO, "Stopping distributed search services...");
 		timer.cancel();
 	}
 
 	public void register() throws IOException {
-		ServiceRegistrar.register(uniqueName, SDAConstants.ENGINE_URL,
-				SDAConstants.SDA, SDAConstants.DESCRIPTION);
+		ServiceRegistrar.register(uniqueName, SDAConstants.ENGINE_URL, SDAConstants.SDA,
+				SDAConstants.DESCRIPTION);
 	}
 
 	public static String list() {
 		return ServiceRegistrar.findType(SDAConstants.SDA);
 	}
-
 	public void unregister() {
 		ServiceRegistrar.unregister(uniqueName);
 	}
@@ -83,24 +75,32 @@ public class SearchServiceManager {
 	// This is the distributed interface
 	// Send off the query to all
 	public SearchResult search(String tags) {
-		return doTheWork(tags, SDAConstants.SEARCH);
-	}
-
-	// Local only
-	public SearchResult query(String tags) {
-		return doTheWork(tags, SDAConstants.QUERY);
-	}
-
-	public SearchResult doTheWork(String tags, String serviceType) {
 		SearchResult sr = new SearchResult(dirServices.values().size());
-		for (Entry<String, JSONObject> e : dirServices.entrySet()) {
+		for (JSONObject jsonObj : dirServices.values()) {
+			String url = null;
+			try {
+				url = jsonObj.getString(SDAConstants.URL);
+			} catch (JSONException e) {
+			}
+			if (url != null)
+				new AsyncSearch(sr, url, tags, true).start();
+			else
+				// Won't finish otherwise, just timeout
+				sr.countDown();
+		}
+		return sr;
+	}
+
+	public SearchResult query(String tags) {
+		SearchResult sr = new SearchResult(dirServices.values().size());
+		for (Entry<String, JSONObject> e: dirServices.entrySet()) {
 			String url = null;
 			try {
 				url = e.getValue().getString(SDAConstants.URL);
 			} catch (JSONException ex) {
 			}
 			if (url != null)
-				new AsyncSearch(sr, url, tags, serviceType).start();
+				new AsyncSearch(sr, url, tags, false).start();
 			else
 				// Won't finish otherwise, just timeout
 				sr.countDown();
@@ -114,22 +114,22 @@ public class SearchServiceManager {
 		SearchResult sr;
 		String tags;
 		String url;
-		String serviceType;
+		boolean isQuery;
 
-		AsyncSearch(SearchResult sr, String url, String tags, String serviceType) {
+		AsyncSearch(SearchResult sr, String url, String tags, boolean isQuery) {
 			super();
 			this.sr = sr;
 			this.url = url;
 			this.tags = tags;
-			this.serviceType = serviceType;
+			this.isQuery = isQuery;
 		}
 
 		public void run() {
 			// We handle every exception here in order to
 			// ensure that we decrement the latch whatever
 			// happens to the distributed search.
-			WebResource service = null;
 			try {
+				WebResource service;
 				Client client = Client.create(new DefaultClientConfig());
 				logger.log(Level.INFO, "Searching: " + url);
 				if (url.endsWith("/"))
@@ -137,8 +137,15 @@ public class SearchServiceManager {
 				else
 					service = client.resource(url + "/");
 
-				ClientResponse r = service.path(serviceType).path(tags)
-						.accept(MediaType.APPLICATION_XML)
+				String serviceType;
+				if (isQuery)
+					serviceType = SDAConstants.QUERY;
+				else
+					serviceType = SDAConstants.SEARCH;
+
+				ClientResponse r = service.path(SDAConstants.REST)
+						.path(SDAConstants.SDA).path(serviceType)
+						.path(tags).accept(MediaType.APPLICATION_XML)
 						.get(ClientResponse.class);
 				// Check to make sure that we got a reasonable response
 				if (r.getStatus() < 204) {
@@ -147,7 +154,7 @@ public class SearchServiceManager {
 					logger.log(Level.INFO, "Count: " + sr.getDocs().size());
 				}
 			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Error in search: " + service.toString());
+				logger.log(Level.INFO, "Error in search: " + e);
 			} finally {
 				sr.countDown();
 			}
@@ -163,21 +170,21 @@ public class SearchServiceManager {
 			logger.log(Level.INFO, "Listing Directory services...");
 			dirServices.clear();
 			String los = ServiceRegistrar.findType(SDAConstants.SDA);
-			logger.log(Level.INFO, "LIST: " + los);
+			logger.log(Level.INFO, "LIST: "+los);
 			try {
 				JSONArray losArray = new JSONArray(los);
 				for (int i = 0; i < losArray.length(); i++) {
 					JSONObject jsonObj = losArray.getJSONObject(i);
 					String name = jsonObj.getString(SDAConstants.NAME);
-					if (name != null && !name.equals(uniqueName))
+					if (name != null
+							&& !name.equals(uniqueName))
 						dirServices.put(name, jsonObj);
 				}
 			} catch (JSONException e) {
-				logger.log(Level.SEVERE, "Directory error: " + e);
+				e.printStackTrace();
 			}
-			// Update my entry in the directory service
-			// This just ensures that things won't expire
-			ServiceRegistrar.register(uniqueName, SDAConstants.ENGINE_URL,
+			/* Update my entry in the directory service */
+			ServiceRegistrar.register(uniqueName, SDAConstants.ENGINE_URL, 
 					SDAConstants.SDA, SDAConstants.DESCRIPTION);
 		}
 	}

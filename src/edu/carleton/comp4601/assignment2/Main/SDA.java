@@ -31,7 +31,6 @@ import edu.carleton.comp4601.assignment2.database.DatabaseManager;
 import edu.carleton.comp4601.assignment2.index.CrawlIndexer;
 import edu.carleton.comp4601.assignment2.index.SearchEngine;
 import edu.carleton.comp4601.assignment2.utility.PageRankManager;
-import edu.carleton.comp4601.assignment2.utility.SDAConstants;
 import edu.carleton.comp4601.assignment2.utility.SearchResult;
 import edu.carleton.comp4601.assignment2.utility.SearchServiceManager;
 import edu.carleton.comp4601.assignment2.utility.Tuple;
@@ -525,21 +524,15 @@ public class SDA {
 			return htmlResponse("Error", "No search term provided by client");
 		}
 		
-		//SearchResult result = SearchServiceManager.getInstance().search(terms);
-
 		SearchResult result = SearchServiceManager.getInstance().search(terms);
 		
 		try {
-			result.await(SDAConstants.TIMEOUT, TimeUnit.SECONDS);
+			result.await(10, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		
-		ArrayList<Document> docs = result.getDocs();
-		System.out.println(docs.size());
-		//return documentsToHTML(result.getDocs());
-		
-		return documentsToHTML(docs);
+	
+		return documentsToHTML(result.getDocs());
 	}
 	
 	@GET
@@ -554,19 +547,17 @@ public class SDA {
 		
 		SearchResult result = SearchServiceManager.getInstance().search(terms);
 		
-		/*
 		try {
 			result.await(10, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		}*/
+		}
 		
 		ArrayList<Document> documents = result.getDocs();
 		if(documents == null || documents.isEmpty()) {
 			return new ArrayList<Document>();
 		}
 		
-		//return new ArrayList<Document>();
 		return result.getDocs();
 	}
 	
