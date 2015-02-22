@@ -474,7 +474,17 @@ public class SDA {
 	@Consumes(MediaType.APPLICATION_XML)
 	public Response boostDocuments(){
 		Response res;
-		return Response.ok().build();
+		
+		CrawlIndexer indexer = new CrawlIndexer(homePath + luceneIndexFolder);
+		try {
+			indexer.applyBoost();
+			res = Response.ok().build();
+		} catch (IOException | ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			res = Response.serverError().build();
+		}
+		return res;
 	}
 	
 	//18.5 Boost document relevance
@@ -483,7 +493,18 @@ public class SDA {
 	@Consumes(MediaType.APPLICATION_XML)
 	public Response noBoostDocuments(){
 		Response res;
-		return Response.ok().build();
+
+		CrawlIndexer indexer = new CrawlIndexer(homePath + luceneIndexFolder);
+		try {
+			indexer.removeBoost();
+			res = Response.ok().build();
+		} catch (IOException | ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			res = Response.serverError().build();
+		}
+		return res;
+
 	}
 	
 	//18.8 Query documents with specific terms

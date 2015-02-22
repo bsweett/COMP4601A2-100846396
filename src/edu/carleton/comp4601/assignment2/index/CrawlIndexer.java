@@ -42,6 +42,13 @@ public class CrawlIndexer {
 		this.dirPath = dirPath;
 		this.document = document;
 	}
+	
+	/** Creates a new instance of Indexer */
+	public CrawlIndexer(String dirPath) {
+		this.count = 0;
+		this.dirPath = dirPath;
+		this.document = null;
+	}
 
 	private IndexWriter indexWriter = null;
 
