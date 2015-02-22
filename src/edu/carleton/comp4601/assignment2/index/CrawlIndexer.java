@@ -99,7 +99,9 @@ public class CrawlIndexer {
 		}
 		
 		for (String link : document.getLinks()) {
-			doc.add(new StringField("docLink", link, Field.Store.YES));
+			Field field = new StringField("docLink", link, Field.Store.YES);
+			field.setBoost(2);
+			doc.add(field);
 		}
 		
 		Date date = new Date();
@@ -144,7 +146,9 @@ public class CrawlIndexer {
 		}
 		
 		for (String link : document.getLinks()) {
-			doc.add(new StringField("docLink", link, Field.Store.YES));
+			Field field = new StringField("docLink", link, Field.Store.YES);
+			field.setBoost(2);
+			doc.add(field);
 		}
 		
 		Date date = new Date();
