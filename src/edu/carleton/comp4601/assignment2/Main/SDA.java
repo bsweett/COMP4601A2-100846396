@@ -22,6 +22,7 @@ import javax.xml.bind.JAXBElement;
 
 import edu.carleton.comp4601.assignment2.dao.Document;
 import edu.carleton.comp4601.assignment2.database.DatabaseManager;
+import edu.carleton.comp4601.assignment2.index.CrawlIndexer;
 import edu.carleton.comp4601.assignment2.utility.PageRankManager;
 import edu.carleton.comp4601.assignment2.utility.Tuple;
 
@@ -34,6 +35,9 @@ public class SDA {
 	Request request;
 
 	final private String PATH = "http://localhost:8080/COMP4601SDA/rest/sda";
+	final String homePath = System.getProperty("user.home");
+	final String luceneIndexFolder = "/data/lucene/";
+	
 	private String name;
 
 	public SDA() {
@@ -207,8 +211,15 @@ public class SDA {
 		document.setId(DatabaseManager.getInstance().getNextIndex());
 
 		if(DatabaseManager.getInstance().addNewDocument(document)) {
-			// TODO: INDEX DOCUMENT WITH LUCENE AND ADD BOOST VALUE OF 2 18.6
-			res = Response.ok().build();
+			//INDEX DOCUMENT WITH LUCENE AND ADD BOOST VALUE OF 2 18.6
+			CrawlIndexer indexer = new CrawlIndexer(homePath + luceneIndexFolder, document);
+			try {
+				indexer.indexHTMLDocument();
+				res = Response.ok().build();
+			} catch (IOException e) {
+				e.printStackTrace();
+				res = Response.serverError().build();
+			}	
 		}
 		else {
 			res = Response.noContent().build();
@@ -240,8 +251,15 @@ public class SDA {
 				updatedDocument.setScore(existingDocument.getScore());
 
 				if(DatabaseManager.getInstance().updateDocument(updatedDocument, existingDocument)) {
-					// TODO: DELETE OLD LUCENE DOCUMENT AND INSERT NEW DOCUMENT 18.7
-					res = Response.ok().build();
+					//DELETE OLD LUCENE DOCUMENT AND INSERT NEW DOCUMENT 18.7
+					CrawlIndexer indexer = new CrawlIndexer(homePath + luceneIndexFolder, updatedDocument);
+					try {
+						indexer.indexHTMLDocument();
+						res = Response.ok().build();
+					} catch (IOException e) {
+						e.printStackTrace();
+						res = Response.serverError().build();
+					}	
 				}
 				else {
 					res = Response.noContent().build();
