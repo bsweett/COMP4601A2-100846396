@@ -6,7 +6,7 @@
     <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
     <init-param>
       <param-name>com.sun.jersey.config.property.packages</param-name>
-      <param-value>edu.carleton.COMP4601.a2.Main</param-value>
+      <param-value>edu.carleton.comp4601.assignment2.Main</param-value>
     </init-param>
     <load-on-startup>1</load-on-startup>
   </servlet>
@@ -19,6 +19,6 @@
 	<location>/general_error.html</location>
 </error-page>
 <listener>
-	<listener-class>edu.carleton.COMP4601.a2.utility.SDAContextClass</listener-class>
+	<listener-class>edu.carleton.comp4601.assignment2.utility.SDAContextClass</listener-class>
 </listener>
 </web-app>
