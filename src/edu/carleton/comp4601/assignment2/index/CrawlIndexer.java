@@ -3,6 +3,7 @@ package edu.carleton.comp4601.assignment2.index;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -14,9 +15,13 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
@@ -42,6 +47,7 @@ public class CrawlIndexer {
 	}
 
 	private IndexWriter indexWriter = null;
+	private IndexReader indexReader = null;
 
 	/**
 	 * 
@@ -65,6 +71,30 @@ public class CrawlIndexer {
 	private void closeIndexWriter() throws IOException {
 		if (indexWriter != null) {
 			indexWriter.close();
+		}
+	}
+	
+	/**
+	 * 
+	 * @param create
+	 * @return
+	 * @throws IOException
+	 */
+	private IndexReader getIndexReader(boolean create) throws IOException {
+		if (indexReader == null) {
+			@SuppressWarnings("deprecation")
+			IndexReader indexReader = IndexReader.open(FSDirectory.open(new File(this.dirPath + "index-directory")));
+		}
+		return indexReader;
+	}    
+
+	/**
+	 * 
+	 * @throws IOException
+	 */
+	private void closeIndexReader() throws IOException {
+		if (indexReader != null) {
+			indexReader.close();
 		}
 	}
 
@@ -95,13 +125,13 @@ public class CrawlIndexer {
 		}
 		
 		for (String tag : document.getTags()) {
-			doc.add(new StringField("docTag", tag, Field.Store.YES));
+			Field field = new StringField("docTag", tag, Field.Store.YES);
+			field.setBoost(2);
+			doc.add(field);
 		}
 		
 		for (String link : document.getLinks()) {
-			Field field = new StringField("docLink", link, Field.Store.YES);
-			field.setBoost(2);
-			doc.add(field);
+			doc.add(new StringField("docLink", link, Field.Store.YES));
 		}
 		
 		Date date = new Date();
@@ -142,13 +172,13 @@ public class CrawlIndexer {
 		}
 		
 		for (String tag : document.getTags()) {
-			doc.add(new StringField("docTag", tag, Field.Store.YES));
+			Field field = new StringField("docTag", tag, Field.Store.YES);
+			field.setBoost(2);
+			doc.add(field);
 		}
 		
 		for (String link : document.getLinks()) {
-			Field field = new StringField("docLink", link, Field.Store.YES);
-			field.setBoost(2);
-			doc.add(field);
+			doc.add(new StringField("docLink", link, Field.Store.YES));
 		}
 		
 		Date date = new Date();
@@ -169,5 +199,75 @@ public class CrawlIndexer {
 		this.count++;
 		
 		this.closeIndexWriter();
+	}
+	
+	public void applyBoost(float boost) {
+		SearchEngine searchEngine = new SearchEngine(dirPath);
+		TopDocs topDocs = searchEngine.performSearch("*", 1000000);
+		ScoreDoc[] hits = topDocs.scoreDocs;
+		
+		getIndexWriter(true);
+		
+		
+		for (int i = 0; i < hits.length; i++) {
+            org.apache.lucene.document.Document doc = searchEngine.getDocument(hits[i].doc);
+            edu.carleton.comp4601.assignment2.dao.Document document = new edu.carleton.comp4601.assignment2.dao.Document(Integer.parseInt(doc.get("docId")));
+            
+		}
+           
+		try {
+			reader = getIndexReader(false);
+			for (int i=0; i<reader.maxDoc(); i++) {
+
+			    Document doc = reader.document(i);
+			    List<IndexableField> fields = doc.getFields();
+			    
+			    for(int i=0; i<fields.size(); i++) {
+			    	IndexableField field = fields.get(i);
+			    }
+
+			    // do something with docId here...
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+				
+	}
+	
+	public ArrayList<edu.carleton.comp4601.assignment2.dao.Document> getDocumentsFromHits(ScoreDoc[] hits, SearchEngine searchEngine) throws IOException {
+		ArrayList<edu.carleton.comp4601.assignment2.dao.Document> documents = new ArrayList<edu.carleton.comp4601.assignment2.dao.Document>();
+		for (int i = 0; i < hits.length; i++) {
+            org.apache.lucene.document.Document doc = searchEngine.getDocument(hits[i].doc);
+            edu.carleton.comp4601.assignment2.dao.Document document = new edu.carleton.comp4601.assignment2.dao.Document(Integer.parseInt(doc.get("docId")));
+      
+            if(doc.get("docName") != null) {
+            	document.setName(doc.get("docName"));
+            }
+            else {
+            	document.setName("");
+            }
+            if(doc.getValues("docLink") != null) {
+            	document.setLinks((ArrayList<String>) Arrays.asList(doc.getValues("docLink")));
+            }
+            else {
+            	document.setLinks(new ArrayList<String>());
+            }
+            if(doc.getValues("docTag") != null) {
+            	document.setTags((ArrayList<String>) Arrays.asList(doc.getValues("docTag")));
+            }
+            else {
+            	document.setTags(new ArrayList<String>());
+            }
+            if(doc.get("docText") != null) {
+            	document.setText(doc.get("docText"));
+            }
+            else{
+            	document.setText("");
+            }
+            document.setScore(hits[i].score);
+            documents.add(document);
+        }
+		return documents;
 	}
 }

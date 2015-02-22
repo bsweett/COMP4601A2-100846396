@@ -20,9 +20,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
 
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopDocs;
+
 import edu.carleton.comp4601.assignment2.dao.Document;
 import edu.carleton.comp4601.assignment2.database.DatabaseManager;
 import edu.carleton.comp4601.assignment2.index.CrawlIndexer;
+import edu.carleton.comp4601.assignment2.index.SearchEngine;
 import edu.carleton.comp4601.assignment2.utility.PageRankManager;
 import edu.carleton.comp4601.assignment2.utility.SearchServiceManager;
 import edu.carleton.comp4601.assignment2.utility.Tuple;
@@ -95,7 +100,7 @@ public class SDA {
 
 		return documentsToHTML(documents);
 	}
-
+/*
 	// Gets all documents with the given tag string as XML
 	@GET
 	@Path("search/{tags}")
@@ -125,7 +130,7 @@ public class SDA {
 
 		return documentsToHTML(documents);
 	}
-
+*/
 	// Deletes a document with a given tag string and returns a HTTP code
 	@GET
 	@Path("delete/{tags}")
@@ -369,6 +374,10 @@ public class SDA {
 				+ "Design by-<a href=\"http://w3layouts.com\">W3Layouts</a></div></body>");
 		return htmlBuilder.toString();
 	}
+	
+	private String htmlResponse(String title, String text) {
+		return "<html> " + "<title>" + title + "</title>" + "<body><p>" + text + "</p></body>" + "</html> "; 
+	}
 
 	//Server error HTML
 	@SuppressWarnings("unused")
@@ -426,7 +435,7 @@ public class SDA {
 	@Produces(MediaType.TEXT_HTML)
 	public String listServices(){
 		String list = SearchServiceManager.list();
-		return "<html> " + "<title>" + "500" + "</title>" + "<body><p>" + list + "</p></body>" + "</html> "; 
+		return htmlResponse("Discovered Search Services", list); 
 	}
 	
 	//18.3 Get page rank score for all documents
@@ -443,24 +452,20 @@ public class SDA {
 
 		StringBuilder htmlBuilder = new StringBuilder();
 		htmlBuilder.append("<html>");
-		htmlBuilder.append("<head><title> All Documents </title></head>");
+		htmlBuilder.append("<head><title> Document Page Ranks </title></head>");
 		htmlBuilder.append("<body>");
+		htmlBuilder.append("<table style=\"width:100%\">");	
 		for(int i=0; i<pageRanks.x.size(); i++) {
-			htmlBuilder.append("<h1>" + pageRanks.x.get(i) + "</h1>");
-			htmlBuilder.append("<h1>" + pageRanks.y.get(i) + "</h1>");
+			htmlBuilder.append("<tr>");
+			htmlBuilder.append("<td>" + pageRanks.x.get(i) + "</td>");
+			htmlBuilder.append("<td>" + pageRanks.y.get(i) + "</td>");
+			htmlBuilder.append("</tr>");
 		}
+		htmlBuilder.append("</table>");
 		htmlBuilder.append("</body>");
 		htmlBuilder.append("</html>");
 
 		return htmlBuilder.toString();
-	}
-	
-	@GET
-	@Path("pagerank")
-	@Consumes(MediaType.APPLICATION_XML)
-	@Produces(MediaType.APPLICATION_XML)
-	public ArrayList<Document> getPageRankXML() {
-		return new ArrayList<Document>();
 	}
 	
 	//18.4 Boost document relevance
@@ -504,15 +509,88 @@ public class SDA {
 	@Path("query/{terms}")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.TEXT_HTML)
-	public String searchLocalHTML(){
-		return "hello world";
+	public String searchLocalHTML(@PathParam("terms") String terms) {
+		try {
+			SearchEngine searchEngine = new SearchEngine(homePath + luceneIndexFolder);
+			TopDocs topDocs = searchEngine.performSearch(terms, 100000);
+			
+			if(topDocs.totalHits == 0) {
+				return htmlResponse("Error", "No documents found for terms provided");
+			}
+
+	        ArrayList<Document> documents = getDocumentsFromHits(topDocs.scoreDocs, searchEngine);
+	        
+	        return documentsToHTML(documents);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return htmlResponse("Error", "General exception when trying to search");
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return htmlResponse("Error", "Could not parse terms");
+		}
 	}
 	
 	@GET
 	@Path("query/{terms}")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public ArrayList<Document> searchLocalXML(){
-		return new ArrayList<Document>();
+	public ArrayList<Document> searchLocalXML(@PathParam("terms") String terms){
+		try {
+			SearchEngine searchEngine = new SearchEngine(homePath + luceneIndexFolder);
+			TopDocs topDocs = searchEngine.performSearch(terms, 100000);
+			
+			if(topDocs.totalHits == 0) {
+				throw new RuntimeException("No such Document for terms provided");
+			}
+
+	        ArrayList<Document> documents = getDocumentsFromHits(topDocs.scoreDocs, searchEngine);
+	        
+	        return documents;
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Server Error: Error with search engine");
+			
+		} catch (ParseException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Problem parsing terms in search engine");	
+		}
+	}
+	
+	public ArrayList<Document> getDocumentsFromHits(ScoreDoc[] hits, SearchEngine searchEngine) throws IOException {
+		ArrayList<Document> documents = new ArrayList<Document>();
+		for (int i = 0; i < hits.length; i++) {
+            org.apache.lucene.document.Document doc = searchEngine.getDocument(hits[i].doc);
+            Document document = new Document(Integer.parseInt(doc.get("docId")));
+      
+            if(doc.get("docName") != null) {
+            	document.setName(doc.get("docName"));
+            }
+            else {
+            	document.setName("");
+            }
+            if(doc.getValues("docLink") != null) {
+            	document.setLinks((ArrayList<String>) Arrays.asList(doc.getValues("docLink")));
+            }
+            else {
+            	document.setLinks(new ArrayList<String>());
+            }
+            if(doc.getValues("docTag") != null) {
+            	document.setTags((ArrayList<String>) Arrays.asList(doc.getValues("docTag")));
+            }
+            else {
+            	document.setTags(new ArrayList<String>());
+            }
+            if(doc.get("docText") != null) {
+            	document.setText(doc.get("docText"));
+            }
+            else{
+            	document.setText("");
+            }
+            document.setScore(hits[i].score);
+            documents.add(document);
+        }
+		return documents;
 	}
 }

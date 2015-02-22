@@ -15,14 +15,12 @@ import org.apache.lucene.store.FSDirectory;
 
 public class SearchEngine {
 	
-	final String homePath = System.getProperty("user.home");
-	final String luceneIndexFolder = "/data/lucene/";
 	private IndexSearcher searcher = null;
 	private QueryParser parser = null;
 
 	/** Creates a new instance of SearchEngine */
-	public SearchEngine() throws IOException {
-		searcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(homePath + luceneIndexFolder + "index-directory"))));
+	public SearchEngine(String dirPath) throws IOException {
+		searcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(dirPath + "index-directory"))));
 		parser = new QueryParser("content", new StandardAnalyzer());
 	}
 

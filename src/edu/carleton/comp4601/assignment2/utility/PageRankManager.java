@@ -70,6 +70,22 @@ public class PageRankManager {
         
         return new Tuple<ArrayList<String>, ArrayList<Float>>(documentTitle, documentRank);
 	}
+	
+	public float getDocumentPageRank(int docId) {
+
+		float documentRank = 0;
+
+		for(PageVertex v: currentVertices) {
+			if(v.getId() == docId) {
+				documentRank = (float) pageRanks.get(v.getRow());
+			}
+
+		}
+
+		rankComplete = true;
+
+		return documentRank;
+	}
 
 	private void setupMatrix() {
 
