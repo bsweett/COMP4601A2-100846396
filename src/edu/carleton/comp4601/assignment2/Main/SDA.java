@@ -3,6 +3,7 @@ package edu.carleton.comp4601.assignment2.Main;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletResponse;
@@ -620,28 +621,34 @@ public class SDA {
       
             if(doc.get("docName") != null) {
             	document.setName(doc.get("docName"));
-            }
-            else {
+            } else {
             	document.setName("");
             }
+            
             if(doc.getValues("docLink") != null) {
-            	document.setLinks((ArrayList<String>) Arrays.asList(doc.getValues("docLink")));
-            }
-            else {
+            	List<String> links = Arrays.asList(doc.getValues("docLink"));
+            	for (String l : links) {
+            		document.addLink(l);
+            	}
+            } else {
             	document.setLinks(new ArrayList<String>());
             }
+            
             if(doc.getValues("docTag") != null) {
-            	document.setTags((ArrayList<String>) Arrays.asList(doc.getValues("docTag")));
-            }
-            else {
+            	List<String> tags = Arrays.asList(doc.getValues("docTag"));
+            	for (String t : tags) {
+            		document.addTag(t);
+            	} 
+            } else {
             	document.setTags(new ArrayList<String>());
             }
+            
             if(doc.get("docText") != null) {
             	document.setText(doc.get("docText"));
-            }
-            else{
+            } else{
             	document.setText("");
             }
+            
             document.setScore(hits[i].score);
             documents.add(document);
         }
