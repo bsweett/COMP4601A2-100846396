@@ -24,6 +24,7 @@ import edu.carleton.comp4601.assignment2.dao.Document;
 import edu.carleton.comp4601.assignment2.database.DatabaseManager;
 import edu.carleton.comp4601.assignment2.index.CrawlIndexer;
 import edu.carleton.comp4601.assignment2.utility.PageRankManager;
+import edu.carleton.comp4601.assignment2.utility.SearchServiceManager;
 import edu.carleton.comp4601.assignment2.utility.Tuple;
 
 @Path("/sda")
@@ -372,17 +373,17 @@ public class SDA {
 	//Server error HTML
 	@SuppressWarnings("unused")
 	private String get500() {
-		return "<html> " + "<title>" + "500" + "</title>" + "<body><h1>" + "Server Error - 500" + "</body></h1>" + "</html> ";
+		return "<html> " + "<title>" + "500" + "</title>" + "<body><h1>" + "Server Error - 500" + "</h1></body>" + "</html> ";
 	}
 
 	//Document not found HTML
 	private String get204() {
-		return "<html> " + "<title>" + "204" + "</title>" + "<body><h1>" + "Document not found - 204" + "</body></h1>" + "</html> ";
+		return "<html> " + "<title>" + "204" + "</title>" + "<body><h1>" + "Document not found - 204" + "</h1></body>" + "</html> ";
 	}
 
 	//Invalid Arguments HTML
 	private String get406() {
-		return "<html> " + "<title>" + "406" + "</title>" + "<body><h1>" + "Bad Request - 406" + "</body></h1>" + "</html> ";
+		return "<html> " + "<title>" + "406" + "</title>" + "<body><h1>" + "Bad Request - 406" + "</h1></body>" + "</html> ";
 	}
 
 	//Link not found XML
@@ -422,9 +423,10 @@ public class SDA {
 	@GET
 	@Path("list")
 	@Consumes(MediaType.APPLICATION_XML)
-	public Response listServices(){
-		Response res;
-		return Response.ok().build();
+	@Produces(MediaType.TEXT_HTML)
+	public String listServices(){
+		String list = SearchServiceManager.list();
+		return "<html> " + "<title>" + "500" + "</title>" + "<body><p>" + list + "</p></body>" + "</html> "; 
 	}
 	
 	//18.3 Get page rank score for all documents
