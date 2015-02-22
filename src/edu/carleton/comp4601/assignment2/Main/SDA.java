@@ -3,6 +3,7 @@ package edu.carleton.comp4601.assignment2.Main;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
@@ -29,6 +30,7 @@ import edu.carleton.comp4601.assignment2.database.DatabaseManager;
 import edu.carleton.comp4601.assignment2.index.CrawlIndexer;
 import edu.carleton.comp4601.assignment2.index.SearchEngine;
 import edu.carleton.comp4601.assignment2.utility.PageRankManager;
+import edu.carleton.comp4601.assignment2.utility.SearchResult;
 import edu.carleton.comp4601.assignment2.utility.SearchServiceManager;
 import edu.carleton.comp4601.assignment2.utility.Tuple;
 
@@ -513,16 +515,47 @@ public class SDA {
 	@Path("search/{terms}")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.TEXT_HTML)
-	public String searchDistributedHTML(){
-		return "Hello world";
+	public String searchDistributedHTML(@PathParam("terms") String terms) {
+		
+		if(terms == null || terms.isEmpty()) {
+			return htmlResponse("Error", "No search term provided by client");
+		}
+		
+		SearchResult result = SearchServiceManager.getInstance().search(terms);
+		
+		try {
+			result.await(10, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	
+		return documentsToHTML(result.getDocs());
 	}
 	
 	@GET
 	@Path("search/{terms}")
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.APPLICATION_XML)
-	public ArrayList<Document> searchDistributedXML(){
-		return new ArrayList<Document>();
+	public ArrayList<Document> searchDistributedXML(@PathParam("terms") String terms){
+		
+		if(terms == null || terms.isEmpty()) {
+			throw new RuntimeException("No search term provided by client");
+		}
+		
+		SearchResult result = SearchServiceManager.getInstance().search(terms);
+		
+		try {
+			result.await(10, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		ArrayList<Document> documents = result.getDocs();
+		if(documents == null || documents.isEmpty()) {
+			return new ArrayList<Document>();
+		}
+		
+		return result.getDocs();
 	}
 	
 	//LOCAL DOCUMENT SEARCH
