@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -21,7 +22,6 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,12 +138,9 @@ public class CrawlIndexer {
 	 * @param data
 	 * @throws IOException
 	 */
-	public void indexHTMLDocumentWithBoost(float boost) throws IOException {
+	public void indexHTMLDocumentWithBoost(float boost, IndexWriter writer) throws IOException {
 		
-		logger.info("Indexing Document: " + this.count);
-		IndexWriter writer = getIndexWriter(false);
 		Document doc = new Document();
-		
 		doc.add(new TextField("docId", document.getId().toString(), Field.Store.YES));
 		
 		String name = document.getName();
@@ -205,8 +202,6 @@ public class CrawlIndexer {
 		
 		writer.addDocument(doc);
 		this.count++;
-		
-		this.closeIndexWriter();
 	}  
 	
 	public void updateHtmlDocument() throws IOException {
@@ -259,29 +254,40 @@ public class CrawlIndexer {
 	}
 	
 	public void applyBoost() throws IOException, ParseException {
+		logger.info("Boosting Documents: " + this.count);
+		
 		SearchEngine searchEngine = new SearchEngine(dirPath);
-		TopDocs topDocs = searchEngine.performSearch("*", 1000000);
+		TopDocs topDocs = searchEngine.performSearch("i:ben", 1000000);
 		getIndexWriter(true);
 		ArrayList<edu.carleton.comp4601.assignment2.dao.Document> documents = getDocumentsFromHits(topDocs.scoreDocs, searchEngine);
+	
+		IndexWriter writer = getIndexWriter(false);
 		
 		for(edu.carleton.comp4601.assignment2.dao.Document d: documents) {
 			this.document = d;
-			this.indexHTMLDocumentWithBoost(PageRankManager.getInstance().getDocumentPageRank(d.getId()));
+			this.indexHTMLDocumentWithBoost(PageRankManager.getInstance().getDocumentPageRank(d.getId()), writer);
 		}
-				
+		this.closeIndexWriter();
 	}
 	
 	public void removeBoost() throws IOException, ParseException {
+		logger.info("Removing boost: " + this.count);
+		
 		SearchEngine searchEngine = new SearchEngine(dirPath);
-		TopDocs topDocs = searchEngine.performSearch("*", 1000000);
-		getIndexWriter(true);
+		TopDocs topDocs = searchEngine.performSearch("i:ben", 1000000);
+
 		ArrayList<edu.carleton.comp4601.assignment2.dao.Document> documents = getDocumentsFromHits(topDocs.scoreDocs, searchEngine);
+	
+		getIndexWriter(true);
+
+		IndexWriter writer = getIndexWriter(false);
 		
 		for(edu.carleton.comp4601.assignment2.dao.Document d: documents) {
 			this.document = d;
-			this.indexHTMLDocumentWithBoost(1);
+			this.indexHTMLDocumentWithBoost(1, writer);
 		}
-				
+		
+		this.closeIndexWriter();	
 	}
 	
 	public ArrayList<edu.carleton.comp4601.assignment2.dao.Document> getDocumentsFromHits(ScoreDoc[] hits, SearchEngine searchEngine) throws IOException {
@@ -297,13 +303,19 @@ public class CrawlIndexer {
             	document.setName("");
             }
             if(doc.getValues("docLink") != null) {
-            	document.setLinks((ArrayList<String>) Arrays.asList(doc.getValues("docLink")));
+            	List<String> links = Arrays.asList(doc.getValues("docLink"));
+            	for (String l : links) {
+            		document.addLink(l);
+            	} 
             }
             else {
             	document.setLinks(new ArrayList<String>());
             }
             if(doc.getValues("docTag") != null) {
-            	document.setTags((ArrayList<String>) Arrays.asList(doc.getValues("docTag")));
+            	List<String> tags = Arrays.asList(doc.getValues("docTag"));
+            	for (String t : tags) {
+            		document.addTag(t);
+            	} 
             }
             else {
             	document.setTags(new ArrayList<String>());

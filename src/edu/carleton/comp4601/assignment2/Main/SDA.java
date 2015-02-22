@@ -505,7 +505,9 @@ public class SDA {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			res = Response.serverError().build();
+			System.out.println("In catch of no boost");
 		}
+		System.out.println("Success no boost complete with response of: " + res.getStatus());
 		return res;
 
 	}
@@ -568,7 +570,7 @@ public class SDA {
 		try {
 			SearchEngine searchEngine = new SearchEngine(homePath + luceneIndexFolder);
 			TopDocs topDocs = searchEngine.performSearch(terms, 100000);
-			
+			System.out.println("Hello");
 			if(topDocs.totalHits == 0) {
 				return htmlResponse("Error", "No documents found for terms provided");
 			}
