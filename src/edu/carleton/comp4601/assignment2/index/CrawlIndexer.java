@@ -5,9 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map.Entry;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -15,20 +12,20 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaCoreProperties;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import edu.carleton.comp4601.assignment2.utility.PageRankManager;
 
 public class CrawlIndexer {
 
@@ -47,7 +44,6 @@ public class CrawlIndexer {
 	}
 
 	private IndexWriter indexWriter = null;
-	private IndexReader indexReader = null;
 
 	/**
 	 * 
@@ -71,30 +67,6 @@ public class CrawlIndexer {
 	private void closeIndexWriter() throws IOException {
 		if (indexWriter != null) {
 			indexWriter.close();
-		}
-	}
-	
-	/**
-	 * 
-	 * @param create
-	 * @return
-	 * @throws IOException
-	 */
-	private IndexReader getIndexReader(boolean create) throws IOException {
-		if (indexReader == null) {
-			@SuppressWarnings("deprecation")
-			IndexReader indexReader = IndexReader.open(FSDirectory.open(new File(this.dirPath + "index-directory")));
-		}
-		return indexReader;
-	}    
-
-	/**
-	 * 
-	 * @throws IOException
-	 */
-	private void closeIndexReader() throws IOException {
-		if (indexReader != null) {
-			indexReader.close();
 		}
 	}
 
@@ -152,6 +124,84 @@ public class CrawlIndexer {
 		this.closeIndexWriter();
 	}  
 	
+	/**
+	 * 
+	 * @param document
+	 * @param imageAlts
+	 * @param data
+	 * @throws IOException
+	 */
+	public void indexHTMLDocumentWithBoost(float boost) throws IOException {
+		
+		logger.info("Indexing Document: " + this.count);
+		IndexWriter writer = getIndexWriter(false);
+		Document doc = new Document();
+		
+		doc.add(new TextField("docId", document.getId().toString(), Field.Store.YES));
+		
+		String name = document.getName();
+		String text = document.getText();
+		
+		if(name != null) {
+			Field field = new StringField("docName", document.getName(), Field.Store.YES);
+			field.setBoost(boost);
+			doc.add(field);
+		}
+		
+		if(text != null) {
+			Field field = new StringField("docText", document.getText(), Field.Store.YES);
+			field.setBoost(boost);
+			doc.add(field);
+		}
+		int firstTag = 0;
+		for (String tag : document.getTags()) {
+			if(firstTag==0) {
+				Field field = new StringField("docTag", tag, Field.Store.YES);
+				field.setBoost(boost);
+				doc.add(field);
+				firstTag++;
+			}
+			else {
+				break;
+			}
+		}
+		int firstLink = 0;
+		for (String link : document.getLinks()) {
+			if(firstLink==0) {
+				Field field = new StringField("docLink", link, Field.Store.YES);
+				field.setBoost(boost);
+				doc.add(field);
+				firstLink++;
+			}
+			else {
+				break;
+			}
+		}
+		
+		Date date = new Date();
+		Field field = new LongField("date", date.getTime(), Field.Store.YES);
+		field.setBoost(boost);
+		doc.add(field);
+		
+		field = new StringField("mimeType", "text/html", Field.Store.YES);
+		field.setBoost(boost);
+		doc.add(field);
+			
+		String contents = document.getName() + " " + document.getText();
+		field = new TextField("contents", contents, Field.Store.YES);
+		field.setBoost(boost);
+		doc.add(field);
+		
+		field = new TextField("i", "ben", Field.Store.YES);
+		field.setBoost(boost);
+		doc.add(field);
+		
+		writer.addDocument(doc);
+		this.count++;
+		
+		this.closeIndexWriter();
+	}  
+	
 	public void updateHtmlDocument() throws IOException {
 		logger.info("Updating Document: " + this.count);
 		IndexWriter writer = getIndexWriter(false);
@@ -201,36 +251,28 @@ public class CrawlIndexer {
 		this.closeIndexWriter();
 	}
 	
-	public void applyBoost(float boost) {
+	public void applyBoost() throws IOException, ParseException {
 		SearchEngine searchEngine = new SearchEngine(dirPath);
 		TopDocs topDocs = searchEngine.performSearch("*", 1000000);
-		ScoreDoc[] hits = topDocs.scoreDocs;
-		
 		getIndexWriter(true);
+		ArrayList<edu.carleton.comp4601.assignment2.dao.Document> documents = getDocumentsFromHits(topDocs.scoreDocs, searchEngine);
 		
-		
-		for (int i = 0; i < hits.length; i++) {
-            org.apache.lucene.document.Document doc = searchEngine.getDocument(hits[i].doc);
-            edu.carleton.comp4601.assignment2.dao.Document document = new edu.carleton.comp4601.assignment2.dao.Document(Integer.parseInt(doc.get("docId")));
-            
+		for(edu.carleton.comp4601.assignment2.dao.Document d: documents) {
+			this.document = d;
+			this.indexHTMLDocumentWithBoost(PageRankManager.getInstance().getDocumentPageRank(d.getId()));
 		}
-           
-		try {
-			reader = getIndexReader(false);
-			for (int i=0; i<reader.maxDoc(); i++) {
-
-			    Document doc = reader.document(i);
-			    List<IndexableField> fields = doc.getFields();
-			    
-			    for(int i=0; i<fields.size(); i++) {
-			    	IndexableField field = fields.get(i);
-			    }
-
-			    // do something with docId here...
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+				
+	}
+	
+	public void removeBoost() throws IOException, ParseException {
+		SearchEngine searchEngine = new SearchEngine(dirPath);
+		TopDocs topDocs = searchEngine.performSearch("*", 1000000);
+		getIndexWriter(true);
+		ArrayList<edu.carleton.comp4601.assignment2.dao.Document> documents = getDocumentsFromHits(topDocs.scoreDocs, searchEngine);
+		
+		for(edu.carleton.comp4601.assignment2.dao.Document d: documents) {
+			this.document = d;
+			this.indexHTMLDocumentWithBoost(1);
 		}
 				
 	}
