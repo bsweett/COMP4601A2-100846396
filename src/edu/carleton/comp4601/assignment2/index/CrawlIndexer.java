@@ -139,9 +139,11 @@ public class CrawlIndexer {
 	 * @throws IOException
 	 */
 	public void indexHTMLDocumentWithBoost(float boost, IndexWriter writer) throws IOException {
-		
+		System.out.println("The boost value is: " + boost);
 		Document doc = new Document();
-		doc.add(new TextField("docId", document.getId().toString(), Field.Store.YES));
+		Field fieldId = new TextField("docId", document.getId().toString(), Field.Store.YES);
+		fieldId.setBoost(boost);
+		doc.add(fieldId);
 		
 		String name = document.getName();
 		String text = document.getText();
@@ -157,29 +159,17 @@ public class CrawlIndexer {
 			field.setBoost(boost);
 			doc.add(field);
 		}
-		int firstTag = 0;
-		for (String tag : document.getTags()) {
-			if(firstTag==0) {
-				Field field = new StringField("docTag", tag, Field.Store.YES);
-				field.setBoost(boost);
-				doc.add(field);
-				firstTag++;
-			}
-			else {
-				break;
-			}
+		
+		for (String tag : document.getTags()) {		
+			Field field = new StringField("docTag", tag, Field.Store.YES);
+			field.setBoost(boost);
+			doc.add(field);
 		}
-		int firstLink = 0;
+		
 		for (String link : document.getLinks()) {
-			if(firstLink==0) {
-				Field field = new StringField("docLink", link, Field.Store.YES);
-				field.setBoost(boost);
-				doc.add(field);
-				firstLink++;
-			}
-			else {
-				break;
-			}
+			Field field = new StringField("docLink", link, Field.Store.YES);
+			field.setBoost(boost);
+			doc.add(field);
 		}
 		
 		Date date = new Date();
@@ -265,7 +255,8 @@ public class CrawlIndexer {
 		
 		for(edu.carleton.comp4601.assignment2.dao.Document d: documents) {
 			this.document = d;
-			this.indexHTMLDocumentWithBoost(PageRankManager.getInstance().getDocumentPageRank(d.getId()), writer);
+			float boostAmount = PageRankManager.getInstance().getDocumentPageRank(d.getId());
+			this.indexHTMLDocumentWithBoost(boostAmount, writer);
 		}
 		this.closeIndexWriter();
 	}
@@ -288,6 +279,10 @@ public class CrawlIndexer {
 		}
 		
 		this.closeIndexWriter();	
+	}
+	
+	public void deleteIndex() throws IOException {
+		getIndexWriter(true);
 	}
 	
 	public ArrayList<edu.carleton.comp4601.assignment2.dao.Document> getDocumentsFromHits(ScoreDoc[] hits, SearchEngine searchEngine) throws IOException {

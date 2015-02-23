@@ -48,27 +48,36 @@ public class PageRankManager {
 		}
 	}
 	
-	public Tuple<ArrayList<String>, ArrayList<Float>> computePageRank() {
+	public void computePageRank() {
 		setupMatrix();
         remakeMatrix();
         cleanMatrix(); 
-        
-        ArrayList<Document> allDocuments = DatabaseManager.getInstance().getDocuments();
-        ArrayList<String> documentTitle = new ArrayList<String>();
-        ArrayList<Float> documentRank = new ArrayList<Float>();
-        
-        for(int i=0; i<allDocuments.size(); i++) {
-        	for(PageVertex v: currentVertices) {
-        		if(v.getId() == allDocuments.get(i).getId()) {
-        			documentTitle.add(allDocuments.get(i).getName());
-        			documentRank.add((float) pageRanks.get(v.getRow()));
+		
+        rankComplete = true;
+	}
+	public Tuple<ArrayList<String>, ArrayList<Float>> getPageRank() {
+		
+        if(rankComplete) {
+        	ArrayList<Document> allDocuments = DatabaseManager.getInstance().getDocuments();
+        	System.out.println("There are: " + allDocuments.size() + " documents");
+        	System.out.println("There are: " + currentVertices.size() + " vertices");
+        	ArrayList<String> documentTitle = new ArrayList<String>();
+        	ArrayList<Float> documentRank = new ArrayList<Float>();
+
+        	for(int i=0; i<allDocuments.size(); i++) {
+        		for(PageVertex v: currentVertices) {
+        			int vertexId = v.getId();
+        			int documentId = allDocuments.get(i).getId();
+        			if(vertexId == documentId) {
+        				documentTitle.add(allDocuments.get(i).getName());
+        				documentRank.add((float) pageRanks.get(v.getRow()));
+        			}
         		}
         	}
+        	 return new Tuple<ArrayList<String>, ArrayList<Float>>(documentTitle, documentRank);
         }
-        
-        rankComplete = true;
-        
-        return new Tuple<ArrayList<String>, ArrayList<Float>>(documentTitle, documentRank);
+   
+        return null;    
 	}
 	
 	public float getDocumentPageRank(int docId) {
@@ -88,7 +97,7 @@ public class PageRankManager {
 	}
 
 	private void setupMatrix() {
-		System.out.println(graph.getGraph().vertexSet().size());
+		//System.out.println(graph.getGraph().vertexSet().size());
 		double[][] arrayDummy = new double[graph.getGraph().vertexSet().size()][graph.getGraph().vertexSet().size()];
 		matrix = new Matrix(arrayDummy);
 		int row = 0;

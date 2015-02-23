@@ -17,10 +17,11 @@ public class SDAContextClass implements ServletContextListener {
 	}
 
 	public void contextInitialized(ServletContextEvent arg0) {
+		System.out.println("CONTEXT STARTED");
 		SearchServiceManager.getInstance();
 		DatabaseManager.getInstance();
 		PageRankManager.getInstance();
-		/*	
+			
 		Runnable myRunnable = new Runnable(){
 
 			public void run(){
@@ -30,7 +31,7 @@ public class SDAContextClass implements ServletContextListener {
 
 		   Thread thread = new Thread(myRunnable);
 		   thread.start();
-		   */
+		   
 	}
 
 }

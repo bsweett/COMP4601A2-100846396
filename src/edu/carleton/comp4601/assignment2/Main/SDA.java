@@ -26,6 +26,8 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 
+import com.sleepycat.je.Database;
+
 import edu.carleton.comp4601.assignment2.dao.Document;
 import edu.carleton.comp4601.assignment2.database.DatabaseManager;
 import edu.carleton.comp4601.assignment2.index.CrawlIndexer;
@@ -428,9 +430,19 @@ public class SDA {
 	@Consumes(MediaType.APPLICATION_XML)
 	public Response resetDocuments(){
 		Response res;
-		ArrayList<Document> documents = DatabaseManager.getInstance().getDocuments();
-		System.out.println("Found " + documents.size() + " documents");
-		return Response.ok().build();
+		DatabaseManager.getInstance().getDatabase().dropDatabase();
+		CrawlIndexer indexer = new CrawlIndexer(homePath + luceneIndexFolder);
+		
+		try {
+			indexer.deleteIndex();
+			res = Response.ok().build();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			res = Response.serverError().build();
+		}
+		
+		return res;
 	}
 	
 	//18.2 List the discovered search services
@@ -449,10 +461,10 @@ public class SDA {
 	@Consumes(MediaType.APPLICATION_XML)
 	@Produces(MediaType.TEXT_HTML)
 	public String getPageRankHTML() {
-		Tuple<ArrayList<String>, ArrayList<Float>> pageRanks = PageRankManager.getInstance().computePageRank();
+		Tuple<ArrayList<String>, ArrayList<Float>> pageRanks = PageRankManager.getInstance().getPageRank();
 
 		if(pageRanks == null) {
-			return get204();
+			return htmlResponse("Server error", "Page rank has not completed startup");
 		}
 
 		StringBuilder htmlBuilder = new StringBuilder();
@@ -479,14 +491,18 @@ public class SDA {
 	@Consumes(MediaType.APPLICATION_XML)
 	public Response boostDocuments(){
 		Response res;
-		
-		CrawlIndexer indexer = new CrawlIndexer(homePath + luceneIndexFolder);
-		try {
-			indexer.applyBoost();
-			res = Response.ok().build();
-		} catch (IOException | ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(PageRankManager.getInstance().isRankComplete()) {
+			CrawlIndexer indexer = new CrawlIndexer(homePath + luceneIndexFolder);
+			try {
+				indexer.applyBoost();
+				res = Response.ok().build();
+			} catch (IOException | ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				res = Response.serverError().build();
+			}
+		}
+		else {
 			res = Response.serverError().build();
 		}
 		return res;
