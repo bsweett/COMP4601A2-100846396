@@ -253,7 +253,8 @@ public class CrawlIndexer {
 		
 		for(edu.carleton.comp4601.assignment2.dao.Document d: documents) {
 			this.document = d;
-			this.indexHTMLDocumentWithBoost(PageRankManager.getInstance().getDocumentPageRank(d.getId()), writer);
+			float boostAmount = PageRankManager.getInstance().getDocumentPageRank(d.getId());
+			this.indexHTMLDocumentWithBoost(boostAmount, writer);
 		}
 		this.closeIndexWriter();
 	}
@@ -276,6 +277,10 @@ public class CrawlIndexer {
 		}
 		
 		this.closeIndexWriter();	
+	}
+	
+	public void deleteIndex() throws IOException {
+		getIndexWriter(true);
 	}
 	
 	public ArrayList<edu.carleton.comp4601.assignment2.dao.Document> getDocumentsFromHits(ScoreDoc[] hits, SearchEngine searchEngine) throws IOException {
