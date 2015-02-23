@@ -428,6 +428,8 @@ public class SDA {
 	@Consumes(MediaType.APPLICATION_XML)
 	public Response resetDocuments(){
 		Response res;
+		ArrayList<Document> documents = DatabaseManager.getInstance().getDocuments();
+		System.out.println("Found " + documents.size() + " documents");
 		return Response.ok().build();
 	}
 	
