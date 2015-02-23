@@ -139,9 +139,11 @@ public class CrawlIndexer {
 	 * @throws IOException
 	 */
 	public void indexHTMLDocumentWithBoost(float boost, IndexWriter writer) throws IOException {
-		
+		System.out.println("The boost value is: " + boost);
 		Document doc = new Document();
-		doc.add(new TextField("docId", document.getId().toString(), Field.Store.YES));
+		Field fieldId = new TextField("docId", document.getId().toString(), Field.Store.YES);
+		fieldId.setBoost(boost);
+		doc.add(fieldId);
 		
 		String name = document.getName();
 		String text = document.getText();

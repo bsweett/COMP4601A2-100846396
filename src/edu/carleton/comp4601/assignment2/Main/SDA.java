@@ -491,14 +491,18 @@ public class SDA {
 	@Consumes(MediaType.APPLICATION_XML)
 	public Response boostDocuments(){
 		Response res;
-		
-		CrawlIndexer indexer = new CrawlIndexer(homePath + luceneIndexFolder);
-		try {
-			indexer.applyBoost();
-			res = Response.ok().build();
-		} catch (IOException | ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(PageRankManager.getInstance().isRankComplete()) {
+			CrawlIndexer indexer = new CrawlIndexer(homePath + luceneIndexFolder);
+			try {
+				indexer.applyBoost();
+				res = Response.ok().build();
+			} catch (IOException | ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				res = Response.serverError().build();
+			}
+		}
+		else {
 			res = Response.serverError().build();
 		}
 		return res;
