@@ -157,29 +157,17 @@ public class CrawlIndexer {
 			field.setBoost(boost);
 			doc.add(field);
 		}
-		int firstTag = 0;
-		for (String tag : document.getTags()) {
-			if(firstTag==0) {
-				Field field = new StringField("docTag", tag, Field.Store.YES);
-				field.setBoost(boost);
-				doc.add(field);
-				firstTag++;
-			}
-			else {
-				break;
-			}
+		
+		for (String tag : document.getTags()) {		
+			Field field = new StringField("docTag", tag, Field.Store.YES);
+			field.setBoost(boost);
+			doc.add(field);
 		}
-		int firstLink = 0;
+		
 		for (String link : document.getLinks()) {
-			if(firstLink==0) {
-				Field field = new StringField("docLink", link, Field.Store.YES);
-				field.setBoost(boost);
-				doc.add(field);
-				firstLink++;
-			}
-			else {
-				break;
-			}
+			Field field = new StringField("docLink", link, Field.Store.YES);
+			field.setBoost(boost);
+			doc.add(field);
 		}
 		
 		Date date = new Date();

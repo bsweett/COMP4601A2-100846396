@@ -184,10 +184,10 @@ public class DatabaseManager {
 			DBCursor result = col.find();
 
 			if(result != null) {
-				System.out.println("Found documents");
+				//System.out.println("Found documents");
 				ArrayList<Document> documents = new ArrayList<Document>();
 				while(result.hasNext()) {
-					System.out.println("Next result is: " + result.next());
+					//System.out.println("Next result is: " + result.next());
 					documents.add(new Document(result.next().toMap()));
 				}
 				return documents;
@@ -195,7 +195,7 @@ public class DatabaseManager {
 
 			return null;
 		} catch (Exception e) {
-			System.out.println("MongoException: " + e.getMessage());
+			e.printStackTrace();
 			return null;
 		}
 

@@ -88,7 +88,7 @@ public class PageRankManager {
 	}
 
 	private void setupMatrix() {
-		System.out.println(graph.getGraph().vertexSet().size());
+		//System.out.println(graph.getGraph().vertexSet().size());
 		double[][] arrayDummy = new double[graph.getGraph().vertexSet().size()][graph.getGraph().vertexSet().size()];
 		matrix = new Matrix(arrayDummy);
 		int row = 0;
